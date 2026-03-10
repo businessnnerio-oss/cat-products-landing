@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Heart, Zap, Smile, ShoppingCart } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useEffect, useState } from "react";
+import CatAssistant from "@/components/CatAssistant";
 
 /**
  * Premium Cat Care Landing Page
@@ -376,6 +377,9 @@ export default function Home() {
           </div>
         </div>
       </footer>
+
+      {/* Chat Assistant */}
+      <CatAssistant />
     </div>
   );
 }
