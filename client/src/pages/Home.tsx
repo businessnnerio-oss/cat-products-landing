@@ -1,6 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Heart, Zap, Smile, ShoppingCart } from "lucide-react";
+import { trpc } from "@/lib/trpc";
+import { useEffect, useState } from "react";
 
 /**
  * Premium Cat Care Landing Page
@@ -10,9 +12,37 @@ import { Heart, Zap, Smile, ShoppingCart } from "lucide-react";
  */
 
 export default function Home() {
+  const [clicks, setClicks] = useState<Record<string, number>>({});
+  
+  // Fetch click statistics
+  const { data: clickStats } = trpc.clicks.getStats.useQuery();
+  const trackClickMutation = trpc.clicks.trackClick.useMutation();
+
+  useEffect(() => {
+    if (clickStats) {
+      const statsMap: Record<string, number> = {};
+      clickStats.forEach(stat => {
+        statsMap[stat.productId] = stat.clickCount;
+      });
+      setClicks(statsMap);
+    }
+  }, [clickStats]);
+
+  const handleProductClick = async (productId: string, url: string) => {
+    // Track the click
+    await trackClickMutation.mutateAsync({
+      productId,
+      userAgent: navigator.userAgent,
+      referrer: document.referrer || 'direct'
+    });
+    
+    // Open the link
+    window.open(url, '_blank');
+  };
+
   const primaryProducts = [
     {
-      id: 1,
+      id: "minino-plus",
       name: "Minino Plus Premium",
       description: "Alimento seco adulto sabor carne, pollo y pavo",
       price: "$147",
@@ -21,7 +51,7 @@ export default function Home() {
       badge: "Más vendido"
     },
     {
-      id: 2,
+      id: "purina-excellent",
       name: "Purina Excellent Urinary",
       description: "Croquetas sabor pollo y arroz 7.5kg",
       price: "$996",
@@ -30,7 +60,7 @@ export default function Home() {
       badge: "Salud Urinaria"
     },
     {
-      id: 3,
+      id: "nupec-felino",
       name: "Nupec Felino Adulto",
       description: "Nutrición especializada pollo, salmón y arroz",
       price: "$736",
@@ -42,21 +72,21 @@ export default function Home() {
 
   const secondaryProducts = [
     {
-      id: 4,
+      id: "kit-momovida",
       name: "Kit Momovida",
       description: "Láser y plumas interactivas",
       price: "$98",
       link: "https://meli.la/1yqcwQD"
     },
     {
-      id: 5,
+      id: "puntero-laser",
       name: "Puntero Láser 7 en 1",
       description: "USB recargable con 7 funciones",
       price: "$127",
       link: "https://meli.la/1zhCZHd"
     },
     {
-      id: 6,
+      id: "juguete-elevacion",
       name: "Juguete Elevación Automática",
       description: "Con cuerda elástica interactiva",
       price: "$187",
@@ -187,11 +217,16 @@ export default function Home() {
                     <p className="text-sm text-muted-foreground mt-1">{product.description}</p>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-2xl font-bold text-primary">{product.price}</span>
+                    <div className="flex flex-col">
+                      <span className="text-2xl font-bold text-primary">{product.price}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {clicks[product.id] || 0} clics
+                      </span>
+                    </div>
                     <Button 
                       size="sm"
                       className="bg-primary hover:bg-primary/90"
-                      onClick={() => window.open(product.link, '_blank')}
+                      onClick={() => handleProductClick(product.id, product.link)}
                     >
                       Comprar
                     </Button>
@@ -257,12 +292,17 @@ export default function Home() {
                   <h3 className="text-xl font-bold text-foreground">{product.name}</h3>
                   <p className="text-muted-foreground">{product.description}</p>
                   <div className="flex items-center justify-between pt-4 border-t border-border">
-                    <span className="text-2xl font-bold text-primary">{product.price}</span>
+                    <div className="flex flex-col">
+                      <span className="text-2xl font-bold text-primary">{product.price}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {clicks[product.id] || 0} clics
+                      </span>
+                    </div>
                     <Button 
                       size="sm"
                       variant="outline"
                       className="border-secondary text-secondary hover:bg-secondary/10"
-                      onClick={() => window.open(product.link, '_blank')}
+                      onClick={() => handleProductClick(product.id, product.link)}
                     >
                       Ver
                     </Button>
@@ -289,7 +329,7 @@ export default function Home() {
             <Button 
               size="lg"
               className="bg-primary hover:bg-primary/90 text-primary-foreground"
-              onClick={() => window.open('https://meli.la/1yVveux', '_blank')}
+              onClick={() => handleProductClick("minino-plus", "https://meli.la/1yVveux")}
             >
               Comprar Ahora
             </Button>
